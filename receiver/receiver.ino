@@ -5,8 +5,10 @@
 RF24 radio(7,8);
 struct Signal{
   byte throttle;
+  byte turn;
 };
 int throttle;
+int turn;
 
 Signal data;
 void ResetData() 
@@ -23,6 +25,7 @@ void setup() {
   radio.begin();
   radio.openReadingPipe(1,pipeIn);
   radio.startListening();
+//  pinMode(A1,OUTPUT);
 }
 
 
@@ -37,9 +40,13 @@ void recvData()
 void loop() {
   recvData();
   throttle = data.throttle;
+  turn = data.turn;
   Serial.println("throttle: ");
   Serial.println(throttle);
-  delay(100);
+  Serial.println("turn: ");
+  Serial.println(turn);
+//  analogWrite(A1,throttle);
+  delay(50);
   
   
 }

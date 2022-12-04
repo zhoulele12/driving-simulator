@@ -8,6 +8,7 @@ RF24 radio(7,8);
 
 struct Signal{
   byte throttle;
+  byte turn;
 };
 
 Signal data;
@@ -34,7 +35,8 @@ void loop() {
   int bxValue = analogRead(joyBX);
   int byValue = analogRead(joyBY);
 
-  data.throttle = map(bxValue,0,1023,0,90);
+  data.throttle = map(bxValue,0,1023,0,255);
+  data.turn = map(byValue,0,1023,0,255);
   
   Serial.println(data.throttle);
   radio.write(&data,sizeof(Signal));
