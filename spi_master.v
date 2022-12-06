@@ -9,12 +9,12 @@ module spi_master(
     output reg mosi = 1'b0,     // master out
     output reg cs = 1'b1,       // slave chip select
     output reg [31:0] Y = 32'b0,
+    output [31:0] outData,
     output [14:0] acl_data     // 15 bit data, 5 each axis
     );
-    
+    //assign outData = 32'b0;
     // Control sclk output for spi mode
 	reg sclk_control = 1'b0;		
-	
 	// Create a 1MHz signal from a 4MHz signal
 	// For a 50% duty cycle
 	// 4 x 10^6 / 1 x 10^6 / 2 = 2
@@ -697,6 +697,8 @@ module spi_master(
     
     // Output accelerometer data
     assign acl_data = temp_DATA;
+    assign outData[31:5]= 27'b0;
+    assign outData[4:0] = temp_DATA[9:5];
 	
 	assign latch_data = ((state_reg == END_SPI) && (counter == 32'd258)) ? 1 : 0;
 	assign sclk = (sclk_control) ? clk_reg : 0;

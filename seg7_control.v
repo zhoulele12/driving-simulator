@@ -4,6 +4,7 @@
 
 module seg7_control(
     input clk100mhz,
+    input[31:0] displayData,
     input [14:0] acl_data,
     output reg [6:0] seg,
     output reg dp,
@@ -13,13 +14,13 @@ module seg7_control(
     // Take sign bits out of accelerometer data
     wire x_sign, y_sign, z_sign;
     assign x_sign = acl_data[14];
-    assign y_sign = acl_data[9];
+    assign y_sign = displayData[4];
     assign z_sign = acl_data[4];
     
     // Take 6 bits of axis data out of accelerometer data
     wire [3:0] x_data, y_data, z_data;
     assign x_data = acl_data[13:10];
-    assign y_data = acl_data[8:5];
+    assign y_data = displayData[3:0];
     assign z_data = acl_data[3:0];
     
     // Binary to BCD conversion for each axis 6-bit data
