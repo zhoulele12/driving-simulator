@@ -8,7 +8,7 @@ RF24 radio(7,8);
 
 struct Signal{
   byte throttle;
-//  byte turn;
+ byte turn;
 };
 
 Signal data;
@@ -49,7 +49,7 @@ void loop() {
   if (bit4 > 500){
     turn_val = turn_val + 8;
   }
-  Serial.println(turn_val);
+  // Serial.println(turn_val);
 //  Serial.println("bit1");
 //  Serial.println(bit1);
 //  Serial.println("bit2");
@@ -76,8 +76,9 @@ void loop() {
 
 //  data.throttle = map(bxValue,0,1023,0,255);
 //  data.turn = map(byValue,0,1023,0,255);
-  
-//  Serial.println(data.throttle);
+
+  data.turn = 128;
+  Serial.println(data.throttle);
   radio.write(&data,sizeof(Signal));
   delay(100);
 }
