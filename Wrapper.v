@@ -110,8 +110,8 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     .an(AN)
     );
     assign LED[0] = JB[1];
-    assign LED[1] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
-    assign LED[2] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
+    assign LED[1] = JB[2];
+    assign LED[2] = JB[3];
     assign LED[3] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
     assign LED[4] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
     assign LED[5] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
