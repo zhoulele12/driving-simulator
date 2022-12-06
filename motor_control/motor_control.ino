@@ -53,9 +53,9 @@ void loop() {
   Serial.println("turn: ");
   Serial.println(turn);
  
-  int velocity = throttle-100;
-  bool turn_dir = (turn - 126) >0;
-  float turn_percent = (float(turn) - 126.0)/126.0;
+  int velocity = throttle;
+  bool turn_dir = (turn - 128) >0;
+  float turn_percent = (float(turn) - 128.0)/128.0;
 //  Serial.println("dir: ");
 //  Serial.println(turn_dir);
 //  Serial.println("percent: ");
@@ -70,10 +70,10 @@ void loop() {
   }
 //  analogWrite(PIN_Motor_PWMA, abs(velocity));
 //  analogWrite(PIN_Motor_PWMB, abs(velocity));
-  if((turn - 126) >0){ //right turn
+  if((turn - 128) >0){ //right turn
     analogWrite(PIN_Motor_PWMA, round(float(abs(velocity))*(1.0-turn_percent)));
     analogWrite(PIN_Motor_PWMB, abs(velocity));
-  } else if((turn - 126) <=0) {
+  } else if((turn - 128) <=0) {
     analogWrite(PIN_Motor_PWMA, abs(velocity));
     analogWrite(PIN_Motor_PWMB, round(float(abs(velocity))*(1.0+turn_percent)));//plus here cuz turn_percent is negative
     
