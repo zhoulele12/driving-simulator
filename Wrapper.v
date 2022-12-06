@@ -24,18 +24,31 @@
  *
  **/
 
-module Wrapper (clock, reset);
-	input clock, reset;
-
-	wire rwe, mwe;
+module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,AN, JA, JB);
+	input clock, reset, ACL_MISO;
+	
+	output ACL_MOSI, ACL_SCLK, ACL_CSN, DP;
+	output[14:0] LED;
+	output [4:1] JA;
+	input[4:1] JB;
+	output[6:0] SEG;
+	output[7:0] AN;
+    
+    
+   
+    wire [31:0] accelData, readAccelDataA, readAccelDataB, fullAccelData;
+    wire rwe, mwe, w_4MHz;
 	wire[4:0] rd, rs1, rs2;
 	wire[31:0] instAddr, instData, 
 		rData, regA, regB,
 		memAddr, memDataIn, memDataOut;
-
-
+    wire[14:0] acl_data;
+    
+    
+   
+    
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "";
+	localparam INSTR_FILE = "C:/Users/cz169/processor/processor.srcs/sources_1/imports/Desktop/infinite";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
@@ -62,8 +75,8 @@ module Wrapper (clock, reset);
 	regfile RegisterFile(.clock(clock), 
 		.ctrl_writeEnable(rwe), .ctrl_reset(reset), 
 		.ctrl_writeReg(rd),
-		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), 
-		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB));
+		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), .data_writeRegAccel(fullAccelData), 
+		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), .data_readRegAccelA(readAccelDataA), .data_readRegAccelB(readAccelDataB));
 						
 	// Processor Memory (RAM)
 	RAM ProcMem(.clk(clock), 
@@ -71,5 +84,51 @@ module Wrapper (clock, reset);
 		.addr(memAddr[11:0]), 
 		.dataIn(memDataIn), 
 		.dataOut(memDataOut));
+		
+	 iclk_gen clock_generation(
+    .clk100mhz(clock),
+    .clk_4mhz(w_4MHz)
+    );
+    
+    spi_master master(
+    .iclk(w_4MHz),
+    .miso(ACL_MISO),
+    .sclk(ACL_SCLK),
+    .mosi(ACL_MOSI),
+    .cs(ACL_CSN),
+    .Y(accelData),
+    .outData(fullAccelData),
+    .acl_data(acl_data)
+    );
+    
+    seg7_control display_control(
+    .displayData(fullAccelData),
+    .clk100mhz(clock),
+    .acl_data(acl_data),
+    .seg(SEG),
+    .dp(DP),
+    .an(AN)
+    );
+    assign LED[0] = JB[1];
+    assign LED[1] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
+    assign LED[2] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
+    assign LED[3] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
+    assign LED[4] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
+    assign LED[5] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
+    assign LED[6] = ~fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
+    assign LED[7] = fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
+    assign LED[8] = ~fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
+    assign LED[9] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
+    assign LED[10] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
+    assign LED[11] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
+    assign LED[12] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
+    assign LED[13] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
+    assign LED[14] = ~fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
+    assign LED[15] = fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & fullAccelData[3]; 
+    
+    assign JA[1] = fullAccelData[0];
+    assign JA[2] = fullAccelData[1];
+    assign JA[3] = fullAccelData[2];
+    assign JA[4]= fullAccelData[3];
 
 endmodule

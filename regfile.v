@@ -2,13 +2,13 @@ module regfile (
 	clock,
 	ctrl_writeEnable, ctrl_reset, ctrl_writeReg, data_writeRegAccel,
 	ctrl_readRegA, ctrl_readRegB, data_writeReg,
-	data_readRegA, data_readRegB
+	data_readRegA, data_readRegB, data_readRegAccelA, data_readRegAccelB
 );
 	input clock, ctrl_writeEnable, ctrl_reset;
 	input [4:0] ctrl_writeReg, ctrl_readRegA, ctrl_readRegB;
 	input [31:0] data_writeReg, data_writeRegAccel;
-
-	output [31:0] data_readRegA, data_readRegB;
+ 
+	output [31:0] data_readRegA, data_readRegB, data_readRegAccelA, data_readRegAccelB;
 	
 	wire[31:0] out_en1,out_en2;
 	assign out_en1 = 1<<ctrl_readRegA;
@@ -24,7 +24,7 @@ module regfile (
 			regfile_register reg1(.clk(clock),.out1(data_readRegA),.out2(data_readRegB),.d(data_writeReg),.in_en(in_en[i]),.out_en1(out_en1[i]),.out_en2(out_en2[i]),.clr(ctrl_reset));
 		end
 	endgenerate
-	regfile_register r_accel(.clk(clock), .out1(data_readRegA), .out2(data_readRegB), .d(data_writeRegAccel), .in_en(1'b1), .out_en1(out_en1[29]), .out_en2(out_en2[29]), .clr(ctrl_reset));
+	regfile_register r_accel(.clk(clock), .out1(data_readRegAccelA), .out2(data_readRegAccelB), .d(32'b1), .in_en(1'b1), .out_en1(1'b1), .out_en2(1'b1), .clr(ctrl_reset));
 	regfile_register r_status(.clk(clock),.out1(data_readRegA),.out2(data_readRegB),.d(data_writeReg),.in_en(in_en[30]),.out_en1(out_en1[30]),.out_en2(out_en2[30]),.clr(ctrl_reset));
 	regfile_register ra(.clk(clock),.out1(data_readRegA),.out2(data_readRegB),.d(data_writeReg),.in_en(in_en[31]),.out_en1(out_en1[31]),.out_en2(out_en2[31]),.clr(ctrl_reset));	
 
