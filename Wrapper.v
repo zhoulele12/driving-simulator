@@ -24,29 +24,18 @@
  *
  **/
 
-module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,AN);
-	input clock, reset, ACL_MISO;
-	
-	output ACL_MOSI, ACL_SCLK, ACL_CSN, DP;
-	output[14:0] LED;
-	output[6:0] SEG;
-	output[7:0] AN;
-    
-    
-   
-    wire [15:0] accelData;
-    wire rwe, mwe, w_4MHz;
+module Wrapper (clock, reset);
+	input clock, reset;
+
+	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
 	wire[31:0] instAddr, instData, 
 		rData, regA, regB,
 		memAddr, memDataIn, memDataOut;
-    wire[14:0] acl_data;
-    
-    
-   
-    
+
+
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "C:/Users/cz169/processor/processor.srcs/sources_1/imports/Memory Files/addi_basic";
+	localparam INSTR_FILE = "";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
@@ -73,7 +62,7 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 	regfile RegisterFile(.clock(clock), 
 		.ctrl_writeEnable(rwe), .ctrl_reset(reset), 
 		.ctrl_writeReg(rd),
-		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), .data_writeRegAccel(accelData), 
+		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), 
 		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB));
 						
 	// Processor Memory (RAM)
@@ -82,32 +71,5 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 		.addr(memAddr[11:0]), 
 		.dataIn(memDataIn), 
 		.dataOut(memDataOut));
-		
-	 iclk_gen clock_generation(
-    .clk100mhz(clock),
-    .clk_4mhz(w_4MHz)
-    );
-    
-    spi_master master(
-    .iclk(w_4MHz),
-    .miso(ACL_MISO),
-    .sclk(ACL_SCLK),
-    .mosi(ACL_MOSI),
-    .cs(ACL_CSN),
-    .Y(accelData),
-    .acl_data(acl_data)
-    );
-    
-    seg7_control display_control(
-    .displayData(accelData),
-    .clk100mhz(clock),
-    .acl_data(acl_data),
-    .seg(SEG),
-    .dp(DP),
-    .an(AN)
-    );
-    assign LED[14:10] = acl_data[14:10];
-    assign LED[9:5] =acl_data[9:5];
-    assign LED[4:0] = acl_data[4:0];
 
 endmodule
