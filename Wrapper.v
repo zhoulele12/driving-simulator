@@ -33,25 +33,23 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 	input[4:1] JB;
 	output[6:0] SEG;
 	output[7:0] AN;
-    
-    
    
     wire [31:0] accelData, readAccelDataA, readAccelDataB, fullAccelData;
-    wire rwe, mwe, w_4MHz;
+    wire rwe, mwe, w_4MHz, not_rst;
 	wire[4:0] rd, rs1, rs2;
 	wire[31:0] instAddr, instData, 
 		rData, regA, regB,
 		memAddr, memDataIn, memDataOut;
     wire[14:0] acl_data;
     
-    
-   
-    
+    assign not_rst = ~reset;
+
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "C:/Users/cz169/processor/processor.srcs/sources_1/imports/Desktop/infinite";
-	
+	localparam INSTR_FILE = "C:/Users/cz169/Downloads/driving-simulator-main/driving-simulator-main/mult";
+//	localparam INSTR_FILE = "C:/Users/cz169/Desktop/accel";
+	wire [31:0] PCprobe;
 	// Main Processing Unit
-	processor CPU(.clock(clock), .reset(reset), 
+	processor CPU(.clock(clock), .reset(not_rst), 
 								
 		// ROM
 		.address_imem(instAddr), .q_imem(instData),
@@ -59,7 +57,8 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 		// Regfile
 		.ctrl_writeEnable(rwe),     .ctrl_writeReg(rd),
 		.ctrl_readRegA(rs1),     .ctrl_readRegB(rs2), 
-		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB),
+		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), 
+		.PCprobe(PCprobe),
 									
 		// RAM
 		.wren(mwe), .address_dmem(memAddr), 
@@ -71,12 +70,14 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 		.addr(instAddr[11:0]), 
 		.dataOut(instData));
 	
+	wire [31:0] PCregister;
 	// Register File
 	regfile RegisterFile(.clock(clock), 
-		.ctrl_writeEnable(rwe), .ctrl_reset(reset), 
+		.ctrl_writeEnable(rwe), .ctrl_reset(not_rst), 
 		.ctrl_writeReg(rd),
 		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), .data_writeRegAccel(fullAccelData), 
-		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), .data_readRegAccelA(readAccelDataA), .data_readRegAccelB(readAccelDataB));
+		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), .data_readRegAccelA(readAccelDataA), .data_readRegAccelB(readAccelDataB),
+		.PCprobe(PCprobe),.PCregister(PCregister));
 						
 	// Processor Memory (RAM)
 	RAM ProcMem(.clk(clock), 
@@ -102,7 +103,9 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     );
     
     seg7_control display_control(
-    .displayData(fullAccelData),
+    .displayDataA(readAccelDataA),
+    .displayDataB(readAccelDataB),
+    .displayDataC(PCregister),
     .clk100mhz(clock),
     .acl_data(acl_data),
     .seg(SEG),
@@ -110,8 +113,8 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     .an(AN)
     );
     assign LED[0] = JB[1];
-    assign LED[1] = JB[2];
-    assign LED[2] = JB[3];
+    assign LED[1] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
+    assign LED[2] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
     assign LED[3] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
     assign LED[4] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
     assign LED[5] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
@@ -130,5 +133,7 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     assign JA[2] = fullAccelData[1];
     assign JA[3] = fullAccelData[2];
     assign JA[4]= fullAccelData[3];
+    
+//   ila_1 debug(.clk(w_4MHz), .probe0(readAccelDataB), .probe1(rData), .probe2(regA), .probe3(PCregister));
 
 endmodule
