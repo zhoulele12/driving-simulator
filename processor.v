@@ -79,7 +79,7 @@ module processor(
     assign PCin = jal_fd_flag?jalPC:(jr_dx_flag?ALU_B_in:(branchTaken?branchSum:(bex_jump_flag?bexPC:(jump_flag ? PCjump:PCp1))));
     //flush two stages of instructions
 
-    register ProgramCounter(.clk(~clock),.out(PC),.d(PCin),.in_en(~stall),.out_en(1'b1),.clr(reset));
+    register ProgramCounter(.clk(clock),.out(PC),.d(PCin),.in_en(~stall),.out_en(1'b1),.clr(reset));
     assign address_imem = PC;
     //clear datapath signals?
     //
@@ -87,7 +87,7 @@ module processor(
     assign FD_IR_in = flush_FD?nop:q_imem;
     assign flush_FD = jump_flag|branchTaken|bex_jump_flag|jr_dx_flag|jal_fd_flag|jr_fd_flag;
     //PC goes in cuz PC +1 is actually PC+2
-    pipeline_latch FD(.clk(~clock),.PC_in(PC),.A_in(),.B_in(),.IR_in(FD_IR_in),.PC_out(FD_PC_out),.A_out(),.B_out(),.IR_out(FD_IR_out),.clr(reset),.in_en(~stall));
+    pipeline_latch FD(.clk(clock),.PC_in(PC),.A_in(),.B_in(),.IR_in(FD_IR_in),.PC_out(FD_PC_out),.A_out(),.B_out(),.IR_out(FD_IR_out),.clr(reset),.in_en(~stall));
     wire[31:0] nop;
     assign nop = 32'b0;
     wire FD_multdiv_flag,DX_multdiv_flag;
@@ -123,7 +123,7 @@ module processor(
     assign DX_IR_in = flush_DX?nop:FD_IR_out;
 
     //careful with regfile write enable
-    pipeline_latch DX(.clk(~clock),.PC_in(FD_PC_out),.A_in(data_readRegA),.B_in(data_readRegB),.IR_in(DX_IR_in),.PC_out(DX_PC_out),.A_out(DX_A_out),.B_out(DX_B_out),.IR_out(DX_IR_out),.clr(reset),.in_en(1'b1));
+    pipeline_latch DX(.clk(clock),.PC_in(FD_PC_out),.A_in(data_readRegA),.B_in(data_readRegB),.IR_in(DX_IR_in),.PC_out(DX_PC_out),.A_out(DX_A_out),.B_out(DX_B_out),.IR_out(DX_IR_out),.clr(reset),.in_en(1'b1));
     
     wire[31:0] ALU_A_in,ALU_B_in,ALU_im_in,ALU_out;
 
@@ -192,18 +192,18 @@ module processor(
     wire multdiv_start, multdiv_ready,multdiv_exception,multdiv_is_running;
     wire[31:0] multdiv_result;
     assign multdiv_start = DX_IR_out[31:27] === 5'b00000 & (ALU_opcode === 5'b00110 | ALU_opcode === 5'b00111);
-    dffe_ref_multdiv multdivRunning(.out(multdiv_is_running),.d(1'b1),.clk(~clock),.in_en(multdiv_start),.out_en(1'b1),.clr(multdiv_ready));
+    dffe_ref_multdiv multdivRunning(.out(multdiv_is_running),.d(1'b1),.clk(clock),.in_en(multdiv_start),.out_en(1'b1),.clr(multdiv_ready));
     // set to 1 on posedge, reset on posedge too (ready)
     wire choose_multdiv;
-    //neg_dffe_ref multdivWrite(.out(choose_multdiv),.d(multdiv_ready&multdiv_is_running),.clk(~clock),.in_en(1'b1),.out_en(1'b1),.clr(1'b0));
-    multdiv MultDiv(.data_operandA(ALU_A_in), .data_operandB(ALU_B_in), .ctrl_MULT(multdiv_start & ALU_opcode === 5'b00110), .ctrl_DIV(multdiv_start & ALU_opcode === 5'b00111), .clock(~clock), .data_result(multdiv_result), .data_exception(multdiv_exception), .data_resultRDY(multdiv_ready));
+    neg_dffe_ref multdivWrite(.out(choose_multdiv),.d(multdiv_ready&multdiv_is_running),.clk(~clock),.in_en(1'b1),.out_en(1'b1),.clr(1'b0));
+    multdiv MultDiv(.data_operandA(ALU_A_in), .data_operandB(ALU_B_in), .ctrl_MULT(multdiv_start & ALU_opcode === 5'b00110), .ctrl_DIV(multdiv_start & ALU_opcode === 5'b00111), .clock(clock), .data_result(multdiv_result), .data_exception(multdiv_exception), .data_resultRDY(multdiv_ready));
 
     wire[31:0] PW_P_out,PW_IR_out,XM_PC_out;
-    multdiv_latch PW(.clk(~clock),.P_in(multdiv_result),.IR_in(DX_IR_out),.P_out(PW_P_out),.IR_out(PW_IR_out),.clr(reset),.in_en_P(multdiv_is_running&multdiv_ready),.in_en_IR((multdiv_is_running&multdiv_start)));
+    multdiv_latch PW(.clk(clock),.P_in(multdiv_result),.IR_in(DX_IR_out),.P_out(PW_P_out),.IR_out(PW_IR_out),.clr(reset),.in_en_P(multdiv_is_running&multdiv_ready),.in_en_IR((multdiv_is_running&multdiv_start)));
     //A_in is ALU_out
     assign XM_IR_in = overflow_flag?exception_instruction:DX_IR_out;
     assign XM_A_in = overflow_flag?data_r_status:ALU_out;
-    pipeline_latch XM(.clk(~clock),.PC_in(DX_PC_out),.A_in(XM_A_in),.B_in(DX_B_out),.IR_in(XM_IR_in),.PC_out(XM_PC_out),.A_out(XM_A_out),.B_out(XM_B_out),.IR_out(XM_IR_out),.clr(reset),.in_en(1'b1));
+    pipeline_latch XM(.clk(clock),.PC_in(DX_PC_out),.A_in(XM_A_in),.B_in(DX_B_out),.IR_in(XM_IR_in),.PC_out(XM_PC_out),.A_out(XM_A_out),.B_out(XM_B_out),.IR_out(XM_IR_out),.clr(reset),.in_en(1'b1));
 
     assign address_dmem = XM_A_out;
     
@@ -219,7 +219,7 @@ module processor(
 
     //B_in is datamem out
     wire[31:0] MW_PC_out;
-    pipeline_latch MW(.clk(~clock),.PC_in(XM_PC_out),.A_in(XM_A_out),.B_in(q_dmem),.IR_in(XM_IR_out),.PC_out(MW_PC_out),.A_out(MW_A_out),.B_out(MW_B_out),.IR_out(MW_IR_out),.clr(reset),.in_en(1'b1));
+    pipeline_latch MW(.clk(clock),.PC_in(XM_PC_out),.A_in(XM_A_out),.B_in(q_dmem),.IR_in(XM_IR_out),.PC_out(MW_PC_out),.A_out(MW_A_out),.B_out(MW_B_out),.IR_out(MW_IR_out),.clr(reset),.in_en(1'b1));
 
     wire sw_mw_flag,lw_mw_flag,setx_mw_flag, jal_mw_flag,blt_mw_flag;
     assign lw_mw_flag = MW_IR_out[31:27] === 5'b01000;
@@ -228,7 +228,8 @@ module processor(
     assign jal_mw_flag = MW_IR_out[31:27] === 5'b00011;
     assign blt_mw_flag = MW_IR_out[31:27] === 5'b00110;
 
-    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | multdiv_ready) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 ) | setx_mw_flag | jal_mw_flag;
+    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 & ~((MW_IR_out[31:27]===5'b00000) & (MW_IR_out[6:2]===5'b00110)) ) | setx_mw_flag | jal_mw_flag;
+//assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 ) | setx_mw_flag | jal_mw_flag;
 
     //bypass dmem_in
     wire select_d_mem;
@@ -240,10 +241,10 @@ module processor(
 
     assign setx_Rstatus[26:0] = MW_IR_out[26:0];
     assign setx_Rstatus[31:27] = 5'b0;
-    assign data_writeReg = jal_mw_flag?MW_PC_out:(setx_mw_flag?setx_Rstatus:(multdiv_ready?multdiv_result:(MW_IR_out[30]?MW_B_out:MW_A_out)));
+    assign data_writeReg = jal_mw_flag?MW_PC_out:(setx_mw_flag?setx_Rstatus:(choose_multdiv?PW_P_out:(MW_IR_out[30]?MW_B_out:MW_A_out)));
 
     // or assign data_writeReg = lw_flag?MW_B_out:MW_A_out;
-    assign ctrl_writeReg = jal_mw_flag?5'b11111:(setx_mw_flag?5'b11110:(multdiv_ready?PW_IR_out[26:22]:MW_IR_out[26:22]));
+    assign ctrl_writeReg = jal_mw_flag?5'b11111:(setx_mw_flag?5'b11110:(choose_multdiv?PW_IR_out[26:22]:MW_IR_out[26:22]));
     /* END CODE */
 
 endmodule

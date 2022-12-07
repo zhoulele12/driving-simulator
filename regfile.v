@@ -26,7 +26,8 @@ module regfile (
 		end
 	endgenerate
 	//regfile_register r27(.clk(clock), .out1(PCregister), .out2(), .d(PCprobe), .in_en(PCprobe>PCregister), .out_en1(1'b1), .out_en2(1'b1), .clr(ctrl_reset));
-	regfile_register r28(.clk(clock), .out1(data_readRegAccelA), .out2(data_readRegB), .d(data_writeReg), .in_en(in_en[28]), .out_en1(1'b1), .out_en2(out_en2[28]), .clr(ctrl_reset));
+	regfile_register r28(.clk(clock), .out1(data_readRegAccelA), .out2(PCregister), .d(data_writeReg), .in_en(in_en[28]), .out_en1(1'b1), .out_en2(1'b1), .clr(ctrl_reset));
+//	regfile_register r28(.clk(clock), .out1(data_readRegAccelA), .out2(data_readRegB), .d(data_writeReg), .in_en(in_en[28]), .out_en1(1'b1), .out_en2(out_en2[28]), .clr(ctrl_reset));
 	regfile_register r_accel(.clk(clock), .out1(data_readRegA), .out2(data_readRegAccelB), .d(data_writeRegAccel), .in_en(1'b1), .out_en1(out_en1[29]), .out_en2(1'b1), .clr(ctrl_reset));
 	regfile_register r_status(.clk(clock),.out1(data_readRegA),.out2(data_readRegB),.d(data_writeReg),.in_en(in_en[30]),.out_en1(out_en1[30]),.out_en2(out_en2[30]),.clr(ctrl_reset));
 	regfile_register ra(.clk(clock),.out1(data_readRegA),.out2(data_readRegB),.d(data_writeReg),.in_en(in_en[31]),.out_en1(out_en1[31]),.out_en2(out_en2[31]),.clr(ctrl_reset));	
