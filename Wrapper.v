@@ -49,7 +49,7 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 //	localparam INSTR_FILE = "C:/Users/cz169/Desktop/accel";
 	wire [31:0] PCprobe;
 	// Main Processing Unit
-	processor CPU(.clock(clock), .reset(not_rst), 
+	processor CPU(.clock(w_4MHz), .reset(not_rst), 
 								
 		// ROM
 		.address_imem(instAddr), .q_imem(instData),
@@ -66,13 +66,13 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 	
 	// Instruction Memory (ROM)
 	ROM #(.MEMFILE({INSTR_FILE, ".mem"}))
-	InstMem(.clk(clock), 
+	InstMem(.clk(w_4MHz), 
 		.addr(instAddr[11:0]), 
 		.dataOut(instData));
 	
 	wire [31:0] PCregister;
 	// Register File
-	regfile RegisterFile(.clock(clock), 
+	regfile RegisterFile(.clock(w_4MHz), 
 		.ctrl_writeEnable(rwe), .ctrl_reset(not_rst), 
 		.ctrl_writeReg(rd),
 		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), .data_writeRegAccel(fullAccelData), 
@@ -80,7 +80,7 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 		.PCprobe(PCprobe),.PCregister(PCregister));
 						
 	// Processor Memory (RAM)
-	RAM ProcMem(.clk(clock), 
+	RAM ProcMem(.clk(w_4MHz), 
 		.wEn(mwe), 
 		.addr(memAddr[11:0]), 
 		.dataIn(memDataIn), 
@@ -134,6 +134,6 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     assign JA[3] = fullAccelData[2];
     assign JA[4]= fullAccelData[3];
     
-//   ila_1 debug(.clk(w_4MHz), .probe0(readAccelDataB), .probe1(rData), .probe2(regA), .probe3(PCregister));
+//   ila_1 debug(.clk(w_4MHz), .probe0(regB), .probe1(rData), .probe2(regA), .probe3(PCregister));
 
 endmodule
