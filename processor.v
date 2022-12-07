@@ -40,7 +40,6 @@ module processor(
     data_writeReg,                  // O: Data to write to for RegFile
     data_readRegA,                  // I: Data from port A of RegFile
     data_readRegB,                   // I: Data from port B of RegFile
-    PCprobe
     );
 
     // Control signals
@@ -60,14 +59,9 @@ module processor(
     // Regfile
     output ctrl_writeEnable;
     output [4:0] ctrl_writeReg, ctrl_readRegA, ctrl_readRegB;
-    output [31:0] data_writeReg,PCprobe;
+    output [31:0] data_writeReg;
     input [31:0] data_readRegA, data_readRegB;
-    
-    assign PCprobe = PC;
-    
-    wire falling_clock;
-    assign falling_clock = ~clock;
-    
+
     /* YOUR CODE STARTS HERE */
     wire[31:0] PC,PCp1,PCin,PCjump,FD_PC_out,FD_IR_in,FD_IR_out,DX_PC_out,DX_IR_out,DX_A_out,DX_B_out,XM_IR_in,XM_A_in,XM_A_out,XM_B_out,XM_IR_out,MW_A_out,MW_B_out,MW_IR_out;
     wire stall;
@@ -195,7 +189,7 @@ module processor(
     dffe_ref_multdiv multdivRunning(.out(multdiv_is_running),.d(1'b1),.clk(clock),.in_en(multdiv_start),.out_en(1'b1),.clr(multdiv_ready));
     // set to 1 on posedge, reset on posedge too (ready)
     wire choose_multdiv;
-    neg_dffe_ref multdivWrite(.out(choose_multdiv),.d(multdiv_ready&multdiv_is_running),.clk(~clock),.in_en(1'b1),.out_en(1'b1),.clr(1'b0));
+    neg_dffe_ref multdivWrite(.out(choose_multdiv),.d(multdiv_ready&multdiv_is_running),.clk(clock),.in_en(1'b1),.out_en(1'b1),.clr(1'b0));
     multdiv MultDiv(.data_operandA(ALU_A_in), .data_operandB(ALU_B_in), .ctrl_MULT(multdiv_start & ALU_opcode === 5'b00110), .ctrl_DIV(multdiv_start & ALU_opcode === 5'b00111), .clock(clock), .data_result(multdiv_result), .data_exception(multdiv_exception), .data_resultRDY(multdiv_ready));
 
     wire[31:0] PW_P_out,PW_IR_out,XM_PC_out;
@@ -228,9 +222,8 @@ module processor(
     assign jal_mw_flag = MW_IR_out[31:27] === 5'b00011;
     assign blt_mw_flag = MW_IR_out[31:27] === 5'b00110;
 
-    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 & ~((MW_IR_out[31:27]===5'b00000) & (MW_IR_out[6:2]===5'b00110)) ) | setx_mw_flag | jal_mw_flag;
-//assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 ) | setx_mw_flag | jal_mw_flag;
-
+    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 & ~( (MW_IR_out[31:27]===5'b00000) & (MW_IR_out[6:2]===5'b00110) ) ) | setx_mw_flag | jal_mw_flag;
+    // assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100) | setx_mw_flag | jal_mw_flag;
     //bypass dmem_in
     wire select_d_mem;
     assign select_d_mem = MW_IR_out[26:22] == XM_IR_out[26:22] & sw_xm_flag & ~sw_mw_flag;
