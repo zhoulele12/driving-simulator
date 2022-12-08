@@ -222,8 +222,8 @@ module processor(
     assign jal_mw_flag = MW_IR_out[31:27] === 5'b00011;
     assign blt_mw_flag = MW_IR_out[31:27] === 5'b00110;
 
-    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 & ~( (MW_IR_out[31:27]===5'b00000) & (MW_IR_out[6:2]===5'b00110) ) ) | setx_mw_flag | jal_mw_flag;
-    // assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100) | setx_mw_flag | jal_mw_flag;
+    assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100 & ~( (MW_IR_out[31:27]===5'b00000) & (MW_IR_out[6:2]===5'b00110 | MW_IR_out[6:2]===5'b00111) ) ) | setx_mw_flag | jal_mw_flag;
+//     assign ctrl_writeEnable = (((~sw_mw_flag & MW_IR_out[26:22]!=5'b00000) | choose_multdiv) & MW_IR_out[31:27]!=5'b00010 & MW_IR_out[31:27]!=5'b00110 & MW_IR_out[31:27]!=5'b10110 & MW_IR_out[31:27]!=5'b00100) | setx_mw_flag | jal_mw_flag;
     //bypass dmem_in
     wire select_d_mem;
     assign select_d_mem = MW_IR_out[26:22] == XM_IR_out[26:22] & sw_xm_flag & ~sw_mw_flag;
