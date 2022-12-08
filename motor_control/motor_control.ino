@@ -12,6 +12,7 @@ RF24 radio(9,10);
 struct Signal{
   byte throttle;
   byte turn;
+  byte dir;
 };
 int throttle;
 int turn;
@@ -52,6 +53,8 @@ void loop() {
   Serial.println(throttle);
   Serial.println("turn: ");
   Serial.println(turn);
+  Serial.println("dir: ");
+  Serial.println(data.dir);
  
   int velocity = throttle;
   bool turn_dir = (turn - 128) >0;
@@ -61,7 +64,7 @@ void loop() {
 //  Serial.println("percent: ");
 //  Serial.println(turn_percent);
 //  Serial.println(round(float(abs(velocity))*(1.0-turn_percent)));
-  if(velocity>0){
+  if(data.dir==0){
     digitalWrite(PIN_Motor_AIN_1, HIGH);
     digitalWrite(PIN_Motor_BIN_1, HIGH);
   } else {
