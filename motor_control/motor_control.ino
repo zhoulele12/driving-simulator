@@ -58,7 +58,7 @@ void loop() {
  
   int velocity = throttle;
   bool turn_dir = (turn - 128) >0;
-  float turn_percent = (float(turn) - 128.0)/128.0;
+  float turn_percent = 2.0*(float(turn) - 128.0)/128.0;
 //  Serial.println("dir: ");
 //  Serial.println(turn_dir);
 //  Serial.println("percent: ");
