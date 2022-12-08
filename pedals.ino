@@ -14,6 +14,9 @@
 #define fourth A5
 void setup() {
   Serial.begin(9600);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
 }
 
 void loop() {
@@ -25,12 +28,12 @@ void loop() {
   int bit4 = analogRead(fourth);
   int turn_val= 0;
 
-  Serial.print("Brake reading = ");
-  Serial.print(brakeReading); // print the raw analog reading
-  Serial.print("\n");
-  Serial.print("Gas reading = ");
-  Serial.print(gasReading); // print the raw analog reading
-  Serial.print("\n");
+  // Serial.print("Brake reading = ");
+  // Serial.print(brakeReading); // print the raw analog reading
+  // Serial.print("\n");
+  // Serial.print("Gas reading = ");
+  // Serial.print(gasReading); // print the raw analog reading
+  // Serial.print("\n");
   if (bit1 > 500){
     turn_val = turn_val + 1;
   }
@@ -43,8 +46,115 @@ void loop() {
   if (bit4 > 500){
     turn_val = turn_val + 8;
   }
-  Serial.print(turn_val);
-  Serial.print("\n");
+if (brakeReading > 10)
+{
+  digitalWrite(5, HIGH);
+
+}
+else{
+  digitalWrite(5, LOW);
+}
+ if ((gasReading > 10 && gasReading <= 350))
+  {
+    digitalWrite(3, HIGH);
+    digitalWrite(4, LOW);
+    // digitalWrite(5, HIGH);
+  }
+  // else if ((gasReading > 10 && gasReading <= 350))
+  // {
+  //   digitalWrite(3, HIGH);
+  //   digitalWrite(4, LOW);
+  //   // digitalWrite(5, LOW);
+  // }
+  else if (gasReading >350 && gasReading <=650)
+  {
+    digitalWrite(3, LOW);
+    digitalWrite(4, HIGH);
+    Serial.println("true");
+    Serial.println(gasReading);
+    // digitalWrite(5, HIGH);
+  }
+  // else if (gasReading >350 && gasReading <=650)
+  // {
+  //   digitalWrite(3, LOW);
+  //   digitalWrite(4, HIGH);
+  //   // digitalWrite(5, LOW);
+  // }
+  else if (gasReading > 650)
+  {
+    digitalWrite(4, HIGH);
+    digitalWrite(3, HIGH);
+    // digitalWrite(5, HIGH);
+  }
+  // else if (gasReading > 650 && brakeReading == 0)
+  // {
+  //   digitalWrite(4, HIGH);
+  //   digitalWrite(3, HIGH);
+  //   // digitalWrite(5, LOW);
+  // }
+  // else if (brakeReading >0){
+  //   digitalWrite(4, LOW);
+  //   digitalWrite(3, LOW);
+  //   // digitalWrite(5, HIGH);
+  // }
+  else{
+    digitalWrite(4, LOW);
+    digitalWrite(3, LOW);
+    // digitalWrite(5, LOW);
+
+  }
+
+
+  // if ((gasReading > 10 && gasReading <= 350) && brakeReading >0)
+  // {
+  //   digitalWrite(3, HIGH);
+  //   digitalWrite(4, LOW);
+  //   digitalWrite(5, HIGH);
+  // }
+  // else if ((gasReading > 10 && gasReading <= 350) && brakeReading == 0)
+  // {
+  //   digitalWrite(3, HIGH);
+  //   digitalWrite(4, LOW);
+  //   digitalWrite(5, LOW);
+  // }
+  // else if (gasReading >350 && gasReading <=650 && brakeReading > 0)
+  // {
+  //   digitalWrite(3, LOW);
+  //   digitalWrite(4, HIGH);
+  //   digitalWrite(5, HIGH);
+  // }
+  // else if (gasReading >350 && gasReading <=650 && brakeReading == 0)
+  // {
+  //   digitalWrite(3, LOW);
+  //   digitalWrite(4, HIGH);
+  //   digitalWrite(5, LOW);
+  // }
+  // else if (gasReading > 650 && brakeReading > 0)
+  // {
+  //   digitalWrite(4, HIGH);
+  //   digitalWrite(3, HIGH);
+  //   digitalWrite(5, HIGH);
+  // }
+  // else if (gasReading > 650 && brakeReading == 0)
+  // {
+  //   digitalWrite(4, HIGH);
+  //   digitalWrite(3, HIGH);
+  //   digitalWrite(5, LOW);
+  // }
+  // else if (brakeReading >0){
+  //   digitalWrite(4, LOW);
+  //   digitalWrite(3, LOW);
+  //   digitalWrite(5, HIGH);
+  // }
+  // else{
+  //   digitalWrite(4, LOW);
+  //   digitalWrite(3, LOW);
+  //   digitalWrite(5, LOW);
+
+  // }
+  // Serial.print(turn_val);
+  // Serial.print("\n");
+ 
   // if (analogReading < 10)       // from 0 to 9
   //   Serial.println(" -> no pressure");
   // else if (analogReading < 200) // from 10 to 199
@@ -56,5 +166,5 @@ void loop() {
   // else // from 800 to 1023
   //   Serial.println(" -> big squeeze");
 
-  delay(1000);
+  delay(100);
 }
