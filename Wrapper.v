@@ -24,32 +24,45 @@
  *
  **/
 
-module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,AN, JA, JB);
+module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,AN, JA, JA1, JB, SW);
 	input clock, reset, ACL_MISO;
+	input [15:0] SW;
 	
 	output ACL_MOSI, ACL_SCLK, ACL_CSN, DP;
 	output[14:0] LED;
 	output [4:1] JA;
+	output [7:10] JA1;
 	input[4:1] JB;
 	output[6:0] SEG;
 	output[7:0] AN;
    
-    wire [31:0] accelData, readAccelDataA, readAccelDataB, fullAccelData;
+    wire [31:0] accelData, readAccelDataA, readAccelDataB, fullAccelData, dataGas, outGas, dataBrake, degree;
     wire rwe, mwe, w_4MHz, not_rst;
 	wire[4:0] rd, rs1, rs2;
 	wire[31:0] instAddr, instData, 
-		rData, regA, regB,
+		rData, regA, regB,direction,
 		memAddr, memDataIn, memDataOut;
     wire[14:0] acl_data;
-    
+    reg[31:0] counter;
+    reg slow_clock = 0;
     assign not_rst = ~reset;
-
+    wire[1:0] gearData;
+//    always @(posedge clock) begin
+//		if(counter< 4)
+//			counter = counter + 1;
+//		else begin
+//			counter = 0;
+//			slow_clock = ~slow_clock;
+//		end
+//	end
+    always @(posedge clock) begin
+        slow_clock <= ~slow_clock;
+    end
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "C:/Users/cz169/Downloads/driving-simulator-main/driving-simulator-main/mult";
+	localparam INSTR_FILE = "C:/Users/cz169/Downloads/driving-simulator-main/driving-simulator-main/extra_lines";
 //	localparam INSTR_FILE = "C:/Users/cz169/Desktop/accel";
-	wire [31:0] PCprobe;
 	// Main Processing Unit
-	processor CPU(.clock(w_4MHz), .reset(not_rst), 
+	processor CPU(.clock(slow_clock), .reset(not_rst), 
 								
 		// ROM
 		.address_imem(instAddr), .q_imem(instData),
@@ -58,7 +71,6 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 		.ctrl_writeEnable(rwe),     .ctrl_writeReg(rd),
 		.ctrl_readRegA(rs1),     .ctrl_readRegB(rs2), 
 		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), 
-		.PCprobe(PCprobe),
 									
 		// RAM
 		.wren(mwe), .address_dmem(memAddr), 
@@ -66,21 +78,22 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
 	
 	// Instruction Memory (ROM)
 	ROM #(.MEMFILE({INSTR_FILE, ".mem"}))
-	InstMem(.clk(w_4MHz), 
+	InstMem(.clk(slow_clock), 
 		.addr(instAddr[11:0]), 
 		.dataOut(instData));
 	
-	wire [31:0] PCregister;
+	wire [31:0] PCregister,PCprobe;
 	// Register File
-	regfile RegisterFile(.clock(w_4MHz), 
+	regfile RegisterFile(.clock(slow_clock), 
 		.ctrl_writeEnable(rwe), .ctrl_reset(not_rst), 
 		.ctrl_writeReg(rd),
 		.ctrl_readRegA(rs1), .ctrl_readRegB(rs2), .data_writeRegAccel(fullAccelData), 
-		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), .data_readRegAccelA(readAccelDataA), .data_readRegAccelB(readAccelDataB),
+		.data_writeReg(rData), .data_readRegA(regA), .data_readRegB(regB), .data_readRegAccelA(readAccelDataA), .data_readRegAccelB(readAccelDataB), .data_readRegDirection(direction),
+		.data_readRegGas(outGas), .data_writeRegGas(dataGas), .dataBrakeIn(dataBrake), .data_readRegDegree(degree),
 		.PCprobe(PCprobe),.PCregister(PCregister));
 						
 	// Processor Memory (RAM)
-	RAM ProcMem(.clk(w_4MHz), 
+	RAM ProcMem(.clk(slow_clock), 
 		.wEn(mwe), 
 		.addr(memAddr[11:0]), 
 		.dataIn(memDataIn), 
@@ -103,37 +116,38 @@ module Wrapper (clock, reset, ACL_MISO, ACL_MOSI, ACL_SCLK, ACL_CSN, LED,SEG,DP,
     );
     
     seg7_control display_control(
-    .displayDataA(readAccelDataA),
-    .displayDataB(readAccelDataB),
+    .displayDataA(fullAccelData),
+    .displayDataB(outGas),
     .displayDataC(PCregister),
     .clk100mhz(clock),
+    .degreeData(degree),
+    .directionData(direction),
+    .gear(gearData),
     .acl_data(acl_data),
     .seg(SEG),
     .dp(DP),
     .an(AN)
     );
-    assign LED[0] = JB[1];
-    assign LED[1] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
-    assign LED[2] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
-    assign LED[3] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & ~fullAccelData[3];
-    assign LED[4] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
-    assign LED[5] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
-    assign LED[6] = ~fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
-    assign LED[7] = fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & ~fullAccelData[3];
-    assign LED[8] = ~fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
-    assign LED[9] = fullAccelData[0] & ~fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
-    assign LED[10] = ~fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
-    assign LED[11] = fullAccelData[0] & fullAccelData[1] & ~fullAccelData[2] & fullAccelData[3];
-    assign LED[12] = ~fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
-    assign LED[13] = fullAccelData[0] & ~fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
-    assign LED[14] = ~fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & fullAccelData[3];
-    assign LED[15] = fullAccelData[0] & fullAccelData[1] & fullAccelData[2] & fullAccelData[3]; 
+    assign dataBrake[0] = JB[1];
+    assign dataGas[0] = gearData[0]? 0 :JB[2];
+    assign dataGas[1] = gearData[0] ? 0 : JB[3];
     
-    assign JA[1] = fullAccelData[0];
-    assign JA[2] = fullAccelData[1];
-    assign JA[3] = fullAccelData[2];
-    assign JA[4]= fullAccelData[3];
+    assign JA[1] = readAccelDataA[0];
+    assign JA[2] = readAccelDataA[1];
+    assign JA[3] = readAccelDataA[2];
+    assign JA[4]= readAccelDataA[3];
+    assign JA1[7] = readAccelDataA[4];
+    assign JA1[8] = readAccelDataA[5];
     
+    assign JA1[9] = SW[0];
+    assign JA1[10]= SW[1];
+    assign gearData[0] = SW[0];
+    assign gearData[1] = SW[1];
+    
+    assign LED[0] = degree[0];
+    assign LED[1] = degree[1];
+    assign LED[2] = degree[2];
+    assign LED[3] = degree[3];
 //   ila_1 debug(.clk(w_4MHz), .probe0(regB), .probe1(rData), .probe2(regA), .probe3(PCregister));
 
 endmodule
